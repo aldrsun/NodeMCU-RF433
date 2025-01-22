@@ -8,5 +8,5 @@ Before building and uploading the firmware, you need to create a `constants.h` f
 ```cpp
 #define SSID "YourWiFiSSID"
 #define PASSWORD "YourWiFiPassword"
-#define UDP_HOST "YourUDPServerAddress"
+#define UDP_ADDRESS "YourUDPServerAddress"
 #define UDP_PORT YourUDPServerPort
