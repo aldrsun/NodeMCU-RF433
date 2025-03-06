@@ -32,7 +32,7 @@ WiFiUDP udp;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 600000); // 10800 is UTC offset in seconds
 
-char incomingPacket[8]; // Buffer to hold incoming UDP packets
+char incomingPacket[8];
 
 IPAddress local_IP(192, 168, 1, 236);
 IPAddress gateway(192, 168, 1, 1);
@@ -66,15 +66,15 @@ void loop() {
       incomingPacket[len] = 0;  // NULL TERMINATOR
     }
     if (len == 8) {
-      uint32_t message1 = (incomingPacket[0] << 24) | (incomingPacket[1] << 16) | (incomingPacket[2] << 8) | incomingPacket[3]; // Big-endian to integer
-      uint32_t message2 = (incomingPacket[4] << 24) | (incomingPacket[5] << 16) | (incomingPacket[6] << 8) | incomingPacket[7]; // Big-endian to integer
+      uint32_t message_type    = (incomingPacket[0] << 24) | (incomingPacket[1] << 16) | (incomingPacket[2] << 8) | incomingPacket[3]; // Big-endian to integer
+      uint32_t message_content = (incomingPacket[4] << 24) | (incomingPacket[5] << 16) | (incomingPacket[6] << 8) | incomingPacket[7]; // Big-endian to integer
 
-      switch(message1)
+      switch(message_type)
       {
         case 0:
           for (auto it = messageQueue.begin(); it != messageQueue.end();)
           {
-              if ((*it)->id == message2)
+              if ((*it)->id == message_content)
               {
                   messageQueue.erase(it);
                   break;
@@ -86,7 +86,7 @@ void loop() {
           }
           break;
         case 1:
-          transmit(message2);
+          transmit(message_content);
           break;
       }
     }
@@ -156,11 +156,11 @@ bool readEV1527Signal(unsigned long &data) {
   // BEGINNING OF A BLOCKING CODE
   while (i < 24) {
     while (READ_PIN(DATA_PIN) == HIGH) {}
-    const unsigned long highDuration = micros() - startTime; // startTime set already, before entering this loop, just after new signal begun.
+    const unsigned long highDuration = micros() - startTime;
     startTime = micros();
     while (READ_PIN(DATA_PIN) == LOW) {}
     const unsigned long lowDuration = micros() - startTime;
-    startTime = micros(); // set startTime right after any signal change caught so that we can catch the time of the next signal more accurately in future.
+    startTime = micros();
     if((highDuration < 350 && highDuration > 100 && lowDuration > 450 && lowDuration < 1000) ||
         (lowDuration < 350 && lowDuration > 100 && highDuration > 450 && highDuration < 1000))
     {
@@ -202,14 +202,6 @@ void transmit(int data) {
         }
     }
   }
-}
-
-void sendPulse(const unsigned long& highDuration, const unsigned long& lowDuration)
-{
-  digitalWrite(TRANSMIT_PIN, HIGH);
-  delayMicroseconds(highDuration);
-  digitalWrite(TRANSMIT_PIN, LOW);
-  delayMicroseconds(lowDuration);
 }
 
 void handleMessageQueue()
